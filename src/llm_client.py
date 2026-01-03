@@ -124,8 +124,11 @@ class LLMClient:
                     time.sleep(0.02)
         except Exception as e:
             print(f"Streaming error: {e}")
-            text = self._simulate_answer(mode, query, docs)
-            for i in range(0, len(text), 80):
-                chunk = text[i : i + 80]
+            # Fallback to docs + external_info even if LLM failed
+            knowledge = "\n".join(docs) if docs else "暂无相关知识库信息。"
+            ext = f"\n外部信息：{external_info}" if external_info else ""
+            full_answer = f"基于知识库{ext}，回答您的问题：\n\n{knowledge}\n\n建议参考官方网站获取最新信息。"
+            for i in range(0, len(full_answer), 80):
+                chunk = full_answer[i : i + 80]
                 yield chunk
                 time.sleep(0.02)
