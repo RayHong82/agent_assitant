@@ -4,3 +4,4 @@ requests
 beautifulsoup4
 pytest
 httpx
+openai>=1.0

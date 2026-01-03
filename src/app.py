@@ -54,8 +54,18 @@ async def api_query(request: Request):
     hits = kbs.list(q=query)
     docs = [h.get("content") for h in hits]
 
+    # Use LLM to understand intent
+    intent_result = llm.understand_intent_and_answer(mode, query, docs)
+    external_info = None
+    if intent_result.get("needs_search") and intent_result.get("search_url"):
+        try:
+            search_result = fetch_and_summarize(intent_result["search_url"])
+            external_info = f"从 {search_result['url']} 获取: {search_result['summary']}"
+        except Exception as e:
+            external_info = f"无法获取外部信息: {str(e)}"
+
     def event_stream():
-        for chunk in llm.stream_answer(mode, query, docs):
+        for chunk in llm.stream_answer(mode, query, docs, external_info):
             # SSE-friendly format
             yield f"data: {chunk}\n\n"
 

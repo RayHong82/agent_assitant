@@ -1,10 +1,29 @@
 [
   {
-    "title": "HDB 购买流程",
-    "content": "HDB相关政策摘要",
-    "tags": [
-      "policy"
-    ],
-    "id": "1"
+    "id": "1",
+    "title": "HDB 购房资格",
+    "category": "policy",
+    "content": "新加坡公民和永久居民可以购买 HDB 组屋。外国人通常不能直接购买，但可以通过租赁或商业物业。详细信息请参考 hdb.gov.sg。",
+    "tags": ["HDB", "购房资格", "公民", "永久居民"],
+    "author": "admin",
+    "updated_at": "2024-01-01"
+  },
+  {
+    "id": "2",
+    "title": "销售话术模板",
+    "category": "sales",
+    "content": "在介绍房产时，先了解客户需求，然后强调位置优势、设施完善和投资潜力。使用开放式问题引导对话。",
+    "tags": ["销售策略", "话术", "客户沟通"],
+    "author": "agent",
+    "updated_at": "2024-01-01"
+  },
+  {
+    "id": "3",
+    "title": "贷款流程",
+    "category": "finance",
+    "content": "购房贷款通常需要 10-20% 首付，利率根据银行和贷款类型而定。建议咨询财务顾问计算可负担额度。",
+    "tags": ["贷款", "首付", "利率"],
+    "author": "admin",
+    "updated_at": "2024-01-01"
   }
 ]
