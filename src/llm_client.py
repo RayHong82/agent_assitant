@@ -19,9 +19,17 @@ class LLMClient:
     def understand_intent_and_answer(self, mode: str, query: str, docs: List[str]) -> Dict[str, Any]:
         """Use LLM to understand intent and decide if external search is needed."""
         if not self.client:
-            return {"answer": self._simulate_answer(mode, query, docs), "needs_search": False, "search_url": None}
+            # Fallback: simple keyword-based intent detection
+            needs_search = any(keyword in query.lower() for keyword in ["组屋", "hdb", "政策", "资格", "购买", "loan", "finance"])
+            search_url = "https://www.hdb.gov.sg/" if "hdb" in query.lower() or "组屋" in query.lower() else None
+            return {
+                "needs_search": needs_search,
+                "search_url": search_url,
+                "answer": None,  # Will be generated later
+                "reason": "Keyword-based detection (no LLM)"
+            }
 
-        # Prompt to understand intent and check if up-to-date
+        # Original LLM-based logic
         prompt = f"""
         用户模式: {mode}
         用户问题: {query}
@@ -59,9 +67,12 @@ class LLMClient:
     def stream_answer(self, mode: str, query: str, docs: List[str], external_info: str = None):
         """Stream the final answer, incorporating external info if provided."""
         if not self.client:
-            text = self._simulate_answer(mode, query, docs)
-            for i in range(0, len(text), 80):
-                chunk = text[i : i + 80]
+            # Fallback: generate answer based on docs and external_info
+            knowledge = "\n".join(docs) if docs else "暂无相关知识库信息。"
+            ext = f"\n外部信息：{external_info}" if external_info else ""
+            full_answer = f"基于知识库{ext}，回答您的问题：\n\n{knowledge}\n\n建议参考官方网站获取最新信息。"
+            for i in range(0, len(full_answer), 80):
+                chunk = full_answer[i : i + 80]
                 yield chunk
                 time.sleep(0.02)
             return
