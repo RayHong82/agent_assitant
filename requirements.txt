@@ -1,0 +1,6 @@
+fastapi>=0.95
+uvicorn[standard]>=0.20
+requests
+beautifulsoup4
+pytest
+httpx
