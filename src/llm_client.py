@@ -19,9 +19,20 @@ class LLMClient:
     def understand_intent_and_answer(self, mode: str, query: str, docs: List[str]) -> Dict[str, Any]:
         """Use LLM to understand intent and decide if external search is needed."""
         if not self.client:
-            # Fallback: simple keyword-based intent detection
-            needs_search = any(keyword in query.lower() for keyword in ["组屋", "hdb", "政策", "资格", "购买", "loan", "finance"])
-            search_url = "https://www.hdb.gov.sg/" if "hdb" in query.lower() or "组屋" in query.lower() else None
+            # Fallback: simple keyword-based intent detection and URL selection
+            query_lower = query.lower()
+            needs_search = any(keyword in query_lower for keyword in ["组屋", "hdb", "政策", "资格", "购买", "loan", "finance", "ura", "土地", "外国人", "cpf", "公积金", "tax", "税务"])
+            search_url = None
+            if "hdb" in query_lower or "组屋" in query_lower or "购买" in query_lower:
+                search_url = "https://www.hdb.gov.sg/"
+            elif "ura" in query_lower or "土地" in query_lower or "外国人" in query_lower:
+                search_url = "https://www.ura.gov.sg/"
+            elif "loan" in query_lower or "贷款" in query_lower or "finance" in query_lower:
+                search_url = "https://www.ocbc.com/"  # Example bank site
+            elif "cpf" in query_lower or "公积金" in query_lower:
+                search_url = "https://www.cpf.gov.sg/"
+            elif "tax" in query_lower or "税务" in query_lower:
+                search_url = "https://www.iras.gov.sg/"
             return {
                 "needs_search": needs_search,
                 "search_url": search_url,
@@ -35,9 +46,9 @@ class LLMClient:
         用户问题: {query}
         可用知识库内容: {"\n".join(docs) if docs else "无"}
 
-        请分析用户意图，判断是否需要外部搜索官方信息（如 hdb.gov.sg）。
+        请分析用户意图，判断是否需要外部搜索官方信息。
         如果知识库足够回答且信息最新，直接回复答案。
-        如果需要搜索，返回需要搜索的 URL（如 https://www.hdb.gov.sg/）和理由。
+        如果需要搜索，根据问题内容选择最合适的官方网站 URL（如 hdb.gov.sg, ura.gov.sg, cpf.gov.sg, iras.gov.sg, 或银行网站如 ocbc.com 等）并返回。
 
         回复格式:
         {{
