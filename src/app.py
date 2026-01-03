@@ -74,7 +74,8 @@ async def api_query(request: Request):
     print("Starting to stream answer")
     def event_stream():
         for chunk in llm.stream_answer(mode, query, docs, external_info):
-            yield chunk
+            # SSE-friendly format
+            yield f"data: {chunk}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
