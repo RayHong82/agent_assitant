@@ -1,6 +1,7 @@
 import os
 import json
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File
+import shutil
 from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing import List
@@ -16,7 +17,7 @@ static_dir = os.path.join(BASE_DIR, "src", "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-kbs = KBStore(path=os.path.join(BASE_DIR, "data", "kb.json"))
+kbs = KBStore(path=os.path.join(BASE_DIR, "data", "kb.json"), agent_csv=os.path.join(BASE_DIR, "data", "agent_kb.csv"))
 llm = LLMClient()
 
 
@@ -30,7 +31,8 @@ def index():
 
 @app.get("/api/kb")
 def api_kb(q: str = None):
-    return kbs.list(q=q)
+    # For simplicity, return buyer KB; admin can manage buyer KB
+    return kbs.list(q=q, mode="buyer")
 
 
 @app.post("/api/kb")
@@ -53,7 +55,7 @@ async def api_query(request: Request):
     print(f"Processing query: mode={mode}, query={query}")
 
     # simple retrieval
-    hits = kbs.list(q=query)
+    hits = kbs.list(q=query, mode=mode)
     docs = [h.get("content") for h in hits]
     print(f"Retrieved {len(docs)} docs from KB")
 
@@ -80,12 +82,12 @@ async def api_query(request: Request):
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@app.get("/api/fetch")
-def api_fetch(url: str):
-    if not url.startswith("http"):
-        raise HTTPException(status_code=400, detail="invalid url")
-    try:
-        res = fetch_and_summarize(url)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return res
+@app.post("/api/upload-agent-csv")
+async def upload_agent_csv(file: UploadFile = File(...)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files allowed")
+    csv_path = os.path.join(BASE_DIR, "data", "agent_kb.csv")
+    with open(csv_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    kbs.load_agent_csv(csv_path)
+    return {"message": "Agent KB updated from CSV"}
