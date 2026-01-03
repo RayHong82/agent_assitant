@@ -14,10 +14,5 @@
       "src": "/(.*)",
       "dest": "src/app.py"
     }
-  ],
-  "functions": {
-    "src/app.py": {
-      "runtime": "python3.9"
-    }
-  }
+  ]
 }
