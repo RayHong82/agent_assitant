@@ -50,24 +50,31 @@ async def api_query(request: Request):
     if not query:
         raise HTTPException(status_code=400, detail="query required")
 
+    print(f"Processing query: mode={mode}, query={query}")
+
     # simple retrieval
     hits = kbs.list(q=query)
     docs = [h.get("content") for h in hits]
+    print(f"Retrieved {len(docs)} docs from KB")
 
     # Use LLM to understand intent
     intent_result = llm.understand_intent_and_answer(mode, query, docs)
+    print(f"Intent result: needs_search={intent_result.get('needs_search')}, search_url={intent_result.get('search_url')}, reason={intent_result.get('reason')}")
+
     external_info = None
     if intent_result.get("needs_search") and intent_result.get("search_url"):
         try:
             search_result = fetch_and_summarize(intent_result["search_url"])
             external_info = f"从 {search_result['url']} 获取: {search_result['summary']}"
+            print(f"Fetched external info from {intent_result['search_url']}")
         except Exception as e:
             external_info = f"无法获取外部信息: {str(e)}"
+            print(f"Failed to fetch external info: {e}")
 
+    print("Starting to stream answer")
     def event_stream():
         for chunk in llm.stream_answer(mode, query, docs, external_info):
-            # SSE-friendly format
-            yield f"data: {chunk}\n\n"
+            yield chunk
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
