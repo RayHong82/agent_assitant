@@ -73,7 +73,26 @@ class LLMClient:
             return parsed
         except Exception as e:
             print(f"LLM error: {e}")
-            return {"answer": self._simulate_answer(mode, query, docs), "needs_search": False, "search_url": None}
+            # Fallback to keyword-based detection even if LLM failed
+            query_lower = query.lower()
+            needs_search = any(keyword in query_lower for keyword in ["组屋", "hdb", "政策", "资格", "购买", "loan", "finance", "ura", "土地", "外国人", "cpf", "公积金", "tax", "税务"])
+            search_url = None
+            if "hdb" in query_lower or "组屋" in query_lower or "购买" in query_lower:
+                search_url = "https://www.hdb.gov.sg/"
+            elif "ura" in query_lower or "土地" in query_lower or "外国人" in query_lower:
+                search_url = "https://www.ura.gov.sg/"
+            elif "loan" in query_lower or "贷款" in query_lower or "finance" in query_lower:
+                search_url = "https://www.ocbc.com/"
+            elif "cpf" in query_lower or "公积金" in query_lower:
+                search_url = "https://www.cpf.gov.sg/"
+            elif "tax" in query_lower or "税务" in query_lower:
+                search_url = "https://www.iras.gov.sg/"
+            return {
+                "needs_search": needs_search,
+                "search_url": search_url,
+                "answer": None,
+                "reason": f"LLM failed ({e}), using keyword fallback"
+            }
 
     def stream_answer(self, mode: str, query: str, docs: List[str], external_info: str = None):
         """Stream the final answer, incorporating external info if provided."""
