@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "node": "24",
   "builds": [
     {
       "src": "src/app.py",
